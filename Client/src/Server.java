@@ -3,24 +3,23 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-public class Server extends Thread {
-    private Object msg;
-    private ByteBuffer buf;
+public class Server {
+    //private Object msg;
+    //private ByteBuffer buf;
     private InetSocketAddress addr;
-    private SocketChannel socket = null;
-    private byte[] bytes = new byte[1024];
+    //private byte[] bytes = new byte[1024];
 
-    public Server(String url,  int port, Object obj) {
-        msg = obj;
-        buf = ByteBuffer.wrap(bytes);
-        addr = new InetSocketAddress(url, port);
-        try {
-            socket = SocketChannel.open(addr);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public Server(String url,  int port) {
+        //msg = obj;
+        //buf = ByteBuffer.wrap(bytes);
+        this.addr = new InetSocketAddress(url, port);
     }
 
+    public SocketChannel Connection() throws IOException {
+        return SocketChannel.open(addr);
+    }
+    
+    /*
     public void finalize() {
         try {
             if (socket != null)
@@ -55,4 +54,5 @@ public class Server extends Thread {
             e.printStackTrace();
         }
     }
+    */
 }
