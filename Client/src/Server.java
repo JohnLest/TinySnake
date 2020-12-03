@@ -10,10 +10,10 @@ public class Server extends Thread {
     private SocketChannel socket = null;
     private byte[] bytes = new byte[1024];
 
-    public Server(int port, Object obj) {
+    public Server(String url,  int port, Object obj) {
         msg = obj;
         buf = ByteBuffer.wrap(bytes);
-        addr = new InetSocketAddress("localhost", port);
+        addr = new InetSocketAddress(url, port);
         try {
             socket = SocketChannel.open(addr);
         } catch (IOException e) {
