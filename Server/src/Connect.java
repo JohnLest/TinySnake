@@ -46,8 +46,6 @@ public class Connect {
     }
 
     private void isConnected() throws IOException {
-        System.out.println("Connected: " + clientsLst.size());
-
         if (select.select(timeout) > 0) {
             Iterator i = select.selectedKeys().iterator();
             while (i.hasNext()) {
@@ -136,8 +134,7 @@ public class Connect {
         int headVal = (int) head;
         switch (headVal) {
             case 1:
-                String message = String.format("%s vient de ce connecter", body.toString());
-                sendAll(headVal, message);
+                sendAll(headVal, body);
                 break;
         }
     }
@@ -146,13 +143,5 @@ public class Connect {
         for (SocketChannel socket : clientsLst) {
             write(socket, headVal, body);
         }
-        /*
-        Iterator i = select.selectedKeys().iterator();
-        while (i.hasNext()) {
-            SelectionKey key = (SelectionKey) i.next();
-            i.remove();
-            if (key.isWritable())
-                write(key, headVal, body);
-        }*/
     }
 }

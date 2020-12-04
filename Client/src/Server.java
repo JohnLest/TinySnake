@@ -4,6 +4,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 
 public class Server {
     private ByteBuffer head;
@@ -19,8 +23,9 @@ public class Server {
         return SocketChannel.open(addr);
     }
 
-    public void read(SocketChannel socket) {
+    public Dictionary read(SocketChannel socket) {
         ScatteringByteChannel scatter = socket.socket().getChannel();
+        Dictionary result = new Hashtable<>();
         byte[] headSize = new byte[81];
         byte[] bodySize = new byte[1024];
         ByteBuffer head = ByteBuffer.wrap(headSize);
@@ -30,16 +35,14 @@ public class Server {
             scatter.read(new ByteBuffer[] {head, body});
             head.flip();
             body.flip();
-            Object oHead = Utils.deserialize(headSize);
-            Object obody = Utils.deserialize(bodySize);
-            System.out.println(oHead.toString());
-            System.out.println(obody.toString());
+            result.put(Utils.deserialize(headSize), Utils.deserialize(bodySize));
         } catch (java.io.IOException e) { // Client probably closed connection
             System.out.println(e);
         } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        return result;
     }
 
     public void write(SocketChannel socket, int headVal, Object bodyMsg) {
