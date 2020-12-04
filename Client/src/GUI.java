@@ -8,6 +8,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -175,7 +176,10 @@ public class GUI {
                 String body = result.get(1).toString();
                 if(Objects.equals(body, nameField.getText()))
                 {
+                    Map player =new HashMap();
+                    player.put(body, false);
                     wp.showPanel(true);
+                    wp.updatePlayersState(player, "Test");
                 }
                 
                 System.out.println("stop");
