@@ -4,8 +4,12 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.UUID;
 
 public class Connect {
     private final int ServerPort = 8888;
@@ -13,6 +17,8 @@ public class Connect {
     private LinkedList<SocketChannel> clientsLst;
     private Selector select;
     private ServerSocketChannel server;
+    private Channel canal; 
+    private Dictionary clientChanel;
 
     public Connect() {
         Connection();
@@ -30,6 +36,9 @@ public class Connect {
             select = Selector.open();
             server.register(select, SelectionKey.OP_ACCEPT);
             // #endregion
+            canal = new Channel();
+            clientChanel = new Hashtable();
+
         } catch (IOException e) {
             System.out.println("Erreur connection : " + e.getMessage());
         }
@@ -62,7 +71,6 @@ public class Connect {
         } else if (key.isReadable()) {
             read(key);
         }
-
     }
 
     private void write(SocketChannel socket, int headVal, Object boddMsg) {
@@ -83,6 +91,7 @@ public class Connect {
     private void read(SelectionKey key) {
         SocketChannel socket = (SocketChannel) key.channel();
         ScatteringByteChannel scatter = socket.socket().getChannel();
+        UUID channel = (UUID) clientChanel.get(socket);
         byte[] headSize = new byte[81];
         byte[] bodySize = new byte[1024];
         ByteBuffer head = ByteBuffer.wrap(headSize);
@@ -90,7 +99,8 @@ public class Connect {
         try {
             scatter.read(new ByteBuffer[] { head, body });
         } catch (IOException e) { // Client probably closed connection
-            clientsLst.remove(socket);
+			LinkedList lst = (LinkedList) canal.channels.get(channel);
+            lst.remove(socket);
             close(socket);
             System.err.println(e.getMessage());
         }
@@ -98,7 +108,7 @@ public class Connect {
             try {
                 head.flip();
                 body.flip();
-                analyseMsg(Utils.deserialize(headSize), Utils.deserialize(bodySize));
+                analyseMsg(Utils.deserialize(headSize), Utils.deserialize(bodySize), channel);
             } catch (ClassNotFoundException | IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -111,10 +121,23 @@ public class Connect {
     private void accept(Selector select, SelectionKey key) {
         ServerSocketChannel socket = (ServerSocketChannel) key.channel();
         try {
+            UUID last = null;
+            for (Enumeration e = canal.channels.keys(); e.hasMoreElements();){
+                last = (UUID) e.nextElement();
+            }
+            if(Utils.isNullOrEmpty(last))
+                last = canal.newChannel();
+            LinkedList lst = (LinkedList) canal.channels.get(last);
+            if (lst.size() >= 4){
+                last = canal.newChannel();
+                lst = (LinkedList) canal.channels.get(last);
+            }
             SocketChannel newClient = socket.accept();
             newClient.configureBlocking(false);
-            clientsLst.add(newClient);
+            lst.add(newClient);
             newClient.register(select, 5);
+            clientChanel.put(newClient, last);
+            System.out.println("Stop");
         } catch (java.io.IOException e) {
             close(socket);
         }
@@ -130,18 +153,19 @@ public class Connect {
         }
     }
 
-    private void analyseMsg(Object head, Object body) {
+    private void analyseMsg(Object head, Object body, UUID channel) {
         int headVal = (int) head;
         switch (headVal) {
             case 1:
-                sendAll(headVal, body);
+                sendAll(headVal, body, channel);
                 break;
         }
     }
 
-    private void sendAll(int headVal, Object body) {
-        for (SocketChannel socket : clientsLst) {
-            write(socket, headVal, body);
+    private void sendAll(int headVal, Object body, UUID channel) {
+        LinkedList lst = (LinkedList) canal.channels.get(channel);
+        for (Object socket : lst) {
+            write((SocketChannel) socket, headVal, body);
         }
     }
 }
