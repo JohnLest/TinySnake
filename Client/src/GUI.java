@@ -1,9 +1,12 @@
+
 //--> GUI_class
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class GUI {
@@ -101,10 +104,25 @@ public class GUI {
     private void manageConnectionRequest() {
         try {
             this.socket = serv.Connection();
+            serv.write(socket, 1, nameField.getText());
+
+            Runnable r = (() -> {
+                while (serv != null) {
+                    serv.read(socket);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            });
+            Thread t = new Thread(r);
+            t.start();
         } catch (IOException e) {
             showErrorMessage("Erreur de Connection");
             e.printStackTrace();
         }
     }
-    //#endregion
+    // #endregion
 }
