@@ -13,8 +13,6 @@ public class Connect {
     private LinkedList<SocketChannel> clientsLst;
     private Selector select;
     private ServerSocketChannel server;
-    private byte[] headSize = new byte[81];
-    byte[] bodySize = new byte[1024];
 
     public Connect() {
         Connection();
@@ -40,37 +38,37 @@ public class Connect {
     public void Communicate() {
         try {
             while (server != null) {
-                isConnected(select);
+                isConnected();
             }
         } catch (IOException e) {
             System.out.println("Erreur connection : " + e.getMessage());
         }
     }
 
-    private void isConnected(Selector select) throws IOException {
+    private void isConnected() throws IOException {
         System.out.println("Connected: " + clientsLst.size());
 
         if (select.select(timeout) > 0) {
             Iterator i = select.selectedKeys().iterator();
             while (i.hasNext()) {
-                getClient(select, i);
+                getClient(i);
             }
         }
     }
 
-    private void getClient(Selector select, Iterator i) {
+    private void getClient(Iterator i) {
         SelectionKey key = (SelectionKey) i.next();
         i.remove();
         if (key.isAcceptable()) {
             accept(select, key);
-        }else if (key.isReadable()) {
+        } else if (key.isReadable()) {
             read(key);
         }
 
     }
 
-    private void write(SelectionKey key, int headVal, Object boddMsg) {
-        SocketChannel socket = (SocketChannel) key.channel();
+    private void write(SocketChannel socket, int headVal, Object boddMsg) {
+        //SocketChannel socket = (SocketChannel) key.channel();
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head;
         ByteBuffer body;
@@ -93,18 +91,23 @@ public class Connect {
         ByteBuffer body = ByteBuffer.wrap(bodySize);
         try {
             scatter.read(new ByteBuffer[] { head, body });
-            head.flip();
-            body.flip();
-            analyseMsg(Utils.deserialize(headSize), Utils.deserialize(bodySize), key);
-        } catch (java.io.IOException e) { // Client probably closed connection
+        } catch (IOException e) { // Client probably closed connection
             clientsLst.remove(socket);
             close(socket);
             System.err.println(e.getMessage());
-        } catch (ClassNotFoundException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
-
+        Runnable r = (() -> {
+            try {
+                head.flip();
+                body.flip();
+                analyseMsg(Utils.deserialize(headSize), Utils.deserialize(bodySize));
+            } catch (ClassNotFoundException | IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
+        Thread t = new Thread(r);
+        t.start();
     }
 
     private void accept(Selector select, SelectionKey key) {
@@ -129,15 +132,27 @@ public class Connect {
         }
     }
 
-    private void analyseMsg(Object head, Object body, SelectionKey key) {
+    private void analyseMsg(Object head, Object body) {
         int headVal = (int) head;
         switch (headVal) {
             case 1:
-                write(key, headVal, String.format("%s vient de ce connecter", body.toString()));
-                break;
-
-            default:
+                String message = String.format("%s vient de ce connecter", body.toString());
+                sendAll(headVal, message);
                 break;
         }
+    }
+
+    private void sendAll(int headVal, Object body) {
+        for (SocketChannel socket : clientsLst) {
+            write(socket, headVal, body);
+        }
+        /*
+        Iterator i = select.selectedKeys().iterator();
+        while (i.hasNext()) {
+            SelectionKey key = (SelectionKey) i.next();
+            i.remove();
+            if (key.isWritable())
+                write(key, headVal, body);
+        }*/
     }
 }
