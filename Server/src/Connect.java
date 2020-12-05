@@ -9,6 +9,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Connect {
@@ -95,7 +96,7 @@ public class Connect {
         ScatteringByteChannel scatter = socket.socket().getChannel();
         UUID channel = (UUID) clientChanel.get(socket);
         byte[] headSize = new byte[81];
-        byte[] bodySize = new byte[1024];
+        byte[] bodySize = new byte[10000];
         ByteBuffer head = ByteBuffer.wrap(headSize);
         ByteBuffer body = ByteBuffer.wrap(bodySize);
         try {
@@ -157,14 +158,33 @@ public class Connect {
 
     private void analyseMsg(Object head, Object body, UUID channel) {
         int headVal = (int) head;
+        LinkedList<PlayerInfo> playerLst = (LinkedList) canal.channelUsers.get(channel);
         switch (headVal) {
             case 1:
-                Dictionary userDico = (Dictionary) canal.channelUsers.get(channel);
                 String userName = body.toString();
                 UUID playerID = UUID.randomUUID();
-                playerRepository.newPlayer(playerID,userName);
-                userDico.put(playerID, userName);
-                sendAll(headVal, userDico, channel);
+                PlayerInfo newPlayer = playerRepository.newPlayer(playerID,userName);
+                playerLst.add(newPlayer);
+                sendAll(headVal, playerLst, channel);
+                break;
+            case 2:
+                Dictionary bodyCo = (Dictionary) body;
+                UUID idPlayer = null;
+                for (Enumeration e = bodyCo.keys(); e.hasMoreElements();){
+                    idPlayer = (UUID) e.nextElement();
+                }
+                Boolean ready = (Boolean) bodyCo.get(idPlayer);
+                for (PlayerInfo playerInfo : playerLst) {
+                    if (Objects.equals(playerInfo.getID(), idPlayer)){
+                        playerInfo.setReady(ready);
+                        break;
+                    }
+                }
+                sendAll(1, playerLst, channel);
+
+
+
+
                 break;
         }
     }

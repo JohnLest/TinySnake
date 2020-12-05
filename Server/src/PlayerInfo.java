@@ -1,16 +1,24 @@
+import java.io.Serializable;
+import java.util.UUID;
+
 /**
  * Stores infos relative to player
  */
-public class PlayerInfo
+public class PlayerInfo implements Serializable
 {
+    private static final long serialVersionUID = 6529685098267757690L;
     private String name;
     private int score;
+    private Boolean ready;
+    private UUID id; 
 
 	/**
      * Creates empty player
      */
     public PlayerInfo()
     {
+        ready = false;
+        id = null;
         name = null;
         score = 0;
     }
@@ -20,10 +28,12 @@ public class PlayerInfo
      *
      * @param name The player name
      */
-    public PlayerInfo(String name)
+    public PlayerInfo(String name, UUID id)
     {
+        this.id = id;
         this.name = name;
         score = 0;
+        ready = false;
     }
 
     public int getScore()
@@ -34,6 +44,16 @@ public class PlayerInfo
     public String getName()
     {
         return name;
+    }
+
+    public UUID getID()
+    {
+        return id;
+    }
+
+    public Boolean getReady()
+    {
+        return ready;
     }
 
     public void setName(String name)
@@ -57,5 +77,10 @@ public class PlayerInfo
     {
         score += inc;
         return score;
+    }
+
+    public void setReady(boolean ready)
+    {
+        this.ready = ready;
     }
 }

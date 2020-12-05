@@ -1,7 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.nio.channels.SocketChannel;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Waiting GUI 
@@ -17,7 +21,12 @@ public class WaitingPanel extends JFrame{
     private JTable playersStateTable;
     private boolean firstUpdate = true;
 
-    public WaitingPanel() {
+    private Server serv;
+    private SocketChannel socket;
+
+    public WaitingPanel(Server serv, SocketChannel socket) {
+        this.serv = serv;
+        this.socket = socket;
         initFrame();
     }
 
@@ -72,8 +81,12 @@ public class WaitingPanel extends JFrame{
      * Send a request to the server when the player is ready and manager the interface while waiting for the response
      */
     private void PlayBtnClick() {
-    	playBtn.setEnabled(false);
+        playBtn.setEnabled(false);
     	Runnable r = (()->{
+            UUID tst = App.id;
+            Dictionary dico = new Hashtable();
+            dico.put(App.id, true);
+            serv.write(socket, 2, dico);
     		playBtn.setEnabled(false);
     	});
     	

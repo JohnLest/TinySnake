@@ -1,5 +1,4 @@
 import java.nio.channels.SocketChannel;
-import java.security.PublicKey;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -18,7 +17,7 @@ public class Channel {
     public UUID newChannel (){
         UUID key = UUID.randomUUID();
         channelSockets.put(key, new LinkedList<SocketChannel>());
-        channelUsers.put(key, new Hashtable());
+        channelUsers.put(key, new LinkedList<PlayerInfo>());
         return key;
     } 
 }

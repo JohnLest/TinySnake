@@ -5,11 +5,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -119,7 +118,7 @@ public class GUI {
 	    gamePane.add(new ExitButton(serverConnection), BorderLayout.PAGE_END);
 	    gamePane.add(bottomPanel, BorderLayout.PAGE_END);
 	    */
-        wp = new WaitingPanel();
+        
 	    //serverConnection.setWaitingPanel(wp);
     }
 
@@ -151,6 +150,7 @@ public class GUI {
     private void manageConnectionRequest() {
         try {
             this.socket = serv.Connection();
+            wp = new WaitingPanel(serv, socket);
             serv.write(socket, 1, nameField.getText());
 
             Runnable r = (() -> {
@@ -174,14 +174,14 @@ public class GUI {
 
         switch (headVal) {
             case 1:
-                Dictionary usrDico = (Dictionary) stream.get(1);
-                Map player =new HashMap();
-                for(Enumeration usr = usrDico.elements(); usr.hasMoreElements();){
-                    player.put(usr.nextElement(), false);
-                    wp.updatePlayersState(player, "");
+                LinkedList<PlayerInfo> playerLst = (LinkedList) stream.get(1);
+                Map waiter = new HashMap();
+                for (PlayerInfo player : playerLst) {
+                    waiter.put(player.getName(), player.getReady());
+                    if(Objects.equals(player.getName(), nameField.getText()))
+                        App.id = player.getID();
                 }
-        
-                System.out.println("stop");
+                wp.updatePlayersState(waiter, "");
                 break;
         }
     }
