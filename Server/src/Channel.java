@@ -6,16 +6,19 @@ import java.util.LinkedList;
 import java.util.UUID;
 
 public class Channel {
-    public Dictionary channels;
+    public Dictionary channelSockets;
+    public Dictionary channelUsers;
 
     public Channel() {
-        channels = new Hashtable();
+        channelSockets = new Hashtable();
+        channelUsers = new Hashtable();
         newChannel();
     }
 
     public UUID newChannel (){
         UUID key = UUID.randomUUID();
-        channels.put(key, new LinkedList<SocketChannel>());
+        channelSockets.put(key, new LinkedList<SocketChannel>());
+        channelUsers.put(key, new Hashtable());
         return key;
     } 
 }

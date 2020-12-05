@@ -87,11 +87,8 @@ public class WaitingPanel extends JFrame{
      * @param message string with information to be displayed
      */
     public void updatePlayersState(Map<String, Boolean> playersState, String message) {
-    	if(firstUpdate) {
-    		firstUpdate = false;
-    	}else {
-        	playersInfo.removeAll();
-    	}
+        playersInfo.removeAll();
+
     	PlayersReadyTableModel prModel= new PlayersReadyTableModel(playersState);
     	playersStateTable = new JTable(prModel);
     	playersInfo.add(playersStateTable);

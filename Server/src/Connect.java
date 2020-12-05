@@ -19,6 +19,7 @@ public class Connect {
     private ServerSocketChannel server;
     private Channel canal; 
     private Dictionary clientChanel;
+	private PlayerRepository playerRepository;
 
     public Connect() {
         Connection();
@@ -38,6 +39,7 @@ public class Connect {
             // #endregion
             canal = new Channel();
             clientChanel = new Hashtable();
+            playerRepository = new PlayerRepository();
 
         } catch (IOException e) {
             System.out.println("Erreur connection : " + e.getMessage());
@@ -99,7 +101,7 @@ public class Connect {
         try {
             scatter.read(new ByteBuffer[] { head, body });
         } catch (IOException e) { // Client probably closed connection
-			LinkedList lst = (LinkedList) canal.channels.get(channel);
+			LinkedList lst = (LinkedList) canal.channelSockets.get(channel);
             lst.remove(socket);
             close(socket);
             System.err.println(e.getMessage());
@@ -122,15 +124,15 @@ public class Connect {
         ServerSocketChannel socket = (ServerSocketChannel) key.channel();
         try {
             UUID last = null;
-            for (Enumeration e = canal.channels.keys(); e.hasMoreElements();){
+            for (Enumeration e = canal.channelSockets.keys(); e.hasMoreElements();){
                 last = (UUID) e.nextElement();
             }
             if(Utils.isNullOrEmpty(last))
                 last = canal.newChannel();
-            LinkedList lst = (LinkedList) canal.channels.get(last);
+            LinkedList lst = (LinkedList) canal.channelSockets.get(last);
             if (lst.size() >= 4){
                 last = canal.newChannel();
-                lst = (LinkedList) canal.channels.get(last);
+                lst = (LinkedList) canal.channelSockets.get(last);
             }
             SocketChannel newClient = socket.accept();
             newClient.configureBlocking(false);
@@ -157,13 +159,18 @@ public class Connect {
         int headVal = (int) head;
         switch (headVal) {
             case 1:
-                sendAll(headVal, body, channel);
+                Dictionary userDico = (Dictionary) canal.channelUsers.get(channel);
+                String userName = body.toString();
+                UUID playerID = UUID.randomUUID();
+                playerRepository.newPlayer(playerID,userName);
+                userDico.put(playerID, userName);
+                sendAll(headVal, userDico, channel);
                 break;
         }
     }
 
     private void sendAll(int headVal, Object body, UUID channel) {
-        LinkedList lst = (LinkedList) canal.channels.get(channel);
+        LinkedList lst = (LinkedList) canal.channelSockets.get(channel);
         for (Object socket : lst) {
             write((SocketChannel) socket, headVal, body);
         }

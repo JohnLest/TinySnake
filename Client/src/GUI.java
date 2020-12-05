@@ -138,6 +138,7 @@ public class GUI {
     private void doneButtonClick() {
         if (nameField.getText().length() != 0) {
             manageConnectionRequest();
+            wp.showPanel(true);
         } else {
             showErrorMessage("Enter a name");
         }
@@ -166,22 +167,20 @@ public class GUI {
         }
     }
 
-    public void analyseMsg(Dictionary result) {
+    public void analyseMsg(Dictionary stream) {
         int headVal = 0;
-        for (Enumeration k = result.keys(); k.hasMoreElements();)
-            headVal = (int) k.nextElement();
+        for (Enumeration head = stream.keys(); head.hasMoreElements();)
+            headVal = (int) head.nextElement();
 
         switch (headVal) {
             case 1:
-                String body = result.get(1).toString();
-                if(Objects.equals(body, nameField.getText()))
-                {
-                    Map player =new HashMap();
-                    player.put(body, false);
-                    wp.showPanel(true);
-                    wp.updatePlayersState(player, "Test");
+                Dictionary usrDico = (Dictionary) stream.get(1);
+                Map player =new HashMap();
+                for(Enumeration usr = usrDico.elements(); usr.hasMoreElements();){
+                    player.put(usr.nextElement(), false);
+                    wp.updatePlayersState(player, "");
                 }
-                
+        
                 System.out.println("stop");
                 break;
         }
