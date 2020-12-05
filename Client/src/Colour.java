@@ -1,0 +1,4 @@
+public enum Colour
+{
+    WALL,BACKGROUND,SNAKE_HEAD,SNAKE_BODY,FRUIT;
+}
