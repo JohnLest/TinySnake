@@ -83,12 +83,9 @@ public class WaitingPanel extends JFrame{
     private void PlayBtnClick() {
         playBtn.setEnabled(false);
     	Runnable r = (()->{
-            Dictionary dico = new Hashtable();
-            dico.put(App.id, true);
-            serv.write(socket, 2, dico);
+            serv.write(socket, 2, true);
     		playBtn.setEnabled(false);
     	});
-    	
     	Thread t = new Thread(r);
     	t.start();
     }

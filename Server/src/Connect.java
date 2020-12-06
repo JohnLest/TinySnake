@@ -1,33 +1,34 @@
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Objects;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class Connect {
     private final int ServerPort = 8888;
     private final long timeout = 1000;
-    private LinkedList<SocketChannel> clientsLst;
     private Selector select;
     private ServerSocketChannel server;
-    private Channel canal; 
-    private Dictionary clientChanel;
-	private PlayerRepository playerRepository;
+    private LinkedList<SocketChannel> clients;
+    private PlayerRepository playerRepository;
+    private GameEngineRepository gameEngineRepository;
 
     public Connect() {
+        playerRepository = new PlayerRepository();
+        gameEngineRepository = new GameEngineRepository();
         Connection();
     }
 
     private void Connection() {
-        clientsLst = new LinkedList<SocketChannel>();
         try {
             // #region Connection
             server = ServerSocketChannel.open();
@@ -38,9 +39,6 @@ public class Connect {
             select = Selector.open();
             server.register(select, SelectionKey.OP_ACCEPT);
             // #endregion
-            canal = new Channel();
-            clientChanel = new Hashtable();
-            playerRepository = new PlayerRepository();
 
         } catch (IOException e) {
             System.out.println("Erreur connection : " + e.getMessage());
@@ -76,14 +74,13 @@ public class Connect {
         }
     }
 
-    private void write(SocketChannel socket, int headVal, Object boddMsg) {
-        //SocketChannel socket = (SocketChannel) key.channel();
+    public static void write(SocketChannel socket, int headVal, Object boddMsg) {
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head;
         ByteBuffer body;
         try {
-            head = ByteBuffer.wrap(Utils.serialize(headVal));
-            body = ByteBuffer.wrap((Utils.serialize(boddMsg)));
+            head = ByteBuffer.wrap(Tools.serialize(headVal));
+            body = ByteBuffer.wrap((Tools.serialize(boddMsg)));
             gather.write(new ByteBuffer[] { head, body });
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -94,7 +91,6 @@ public class Connect {
     private void read(SelectionKey key) {
         SocketChannel socket = (SocketChannel) key.channel();
         ScatteringByteChannel scatter = socket.socket().getChannel();
-        UUID channel = (UUID) clientChanel.get(socket);
         byte[] headSize = new byte[81];
         byte[] bodySize = new byte[10000];
         ByteBuffer head = ByteBuffer.wrap(headSize);
@@ -102,8 +98,7 @@ public class Connect {
         try {
             scatter.read(new ByteBuffer[] { head, body });
         } catch (IOException e) { // Client probably closed connection
-			LinkedList lst = (LinkedList) canal.channelSockets.get(channel);
-            lst.remove(socket);
+            clients.remove(socket);
             close(socket);
             System.err.println(e.getMessage());
         }
@@ -111,7 +106,7 @@ public class Connect {
             try {
                 head.flip();
                 body.flip();
-                analyseMsg(Utils.deserialize(headSize), Utils.deserialize(bodySize), channel);
+                analyseMsg(Tools.deserialize(headSize), Tools.deserialize(bodySize), socket);
             } catch (ClassNotFoundException | IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -124,23 +119,10 @@ public class Connect {
     private void accept(Selector select, SelectionKey key) {
         ServerSocketChannel socket = (ServerSocketChannel) key.channel();
         try {
-            UUID last = null;
-            for (Enumeration e = canal.channelSockets.keys(); e.hasMoreElements();){
-                last = (UUID) e.nextElement();
-            }
-            if(Utils.isNullOrEmpty(last))
-                last = canal.newChannel();
-            LinkedList lst = (LinkedList) canal.channelSockets.get(last);
-            if (lst.size() >= 4){
-                last = canal.newChannel();
-                lst = (LinkedList) canal.channelSockets.get(last);
-            }
             SocketChannel newClient = socket.accept();
             newClient.configureBlocking(false);
-            lst.add(newClient);
+            clients.add(newClient);
             newClient.register(select, 5);
-            clientChanel.put(newClient, last);
-            System.out.println("Stop");
         } catch (java.io.IOException e) {
             close(socket);
         }
@@ -156,43 +138,92 @@ public class Connect {
         }
     }
 
-    private void analyseMsg(Object head, Object body, UUID channel) {
+    private void analyseMsg(Object head, Object body, SocketChannel socket) {
         int headVal = (int) head;
-        LinkedList<PlayerInfo> playerLst = (LinkedList) canal.channelUsers.get(channel);
         switch (headVal) {
             case 1:
                 String userName = body.toString();
-                UUID playerID = UUID.randomUUID();
-                PlayerInfo newPlayer = playerRepository.newPlayer(playerID,userName);
-                playerLst.add(newPlayer);
-                sendAll(headVal, playerLst, channel);
+                write(socket, 1, NewPlayer(socket, userName));
                 break;
             case 2:
-                Dictionary bodyCo = (Dictionary) body;
-                UUID idPlayer = null;
-                for (Enumeration e = bodyCo.keys(); e.hasMoreElements();){
-                    idPlayer = (UUID) e.nextElement();
-                }
-                Boolean ready = (Boolean) bodyCo.get(idPlayer);
-                for (PlayerInfo playerInfo : playerLst) {
-                    if (Objects.equals(playerInfo.getID(), idPlayer)){
-                        playerInfo.setReady(ready);
-                        break;
-                    }
-                }
-                sendAll(1, playerLst, channel);
-
-
-
-
+                LinkedList body2 = (LinkedList) body;
+                SetPlayerReady((UUID) body2.get(0), (UUID) body2.get(1), (Boolean) body2.get(2));
+                break;
+            case 3:
+                LinkedList body3 = (LinkedList) body;
+                TreatEvent((UUID) body3.get(0), (UUID) body3.get(1), (GameEvent) body3.get(2));
+                break;
+            case 4:
+                write(socket, 5, GetPlayArea((UUID) body));
+                break;
+            case 5:
+                write(socket, 6, GetScoreboard((UUID) body));
+                break;
+            case 6:
+                write(socket, 7, IsGameOver((UUID) body));
+                break;
+            case 7:
+                LinkedList body7 = (LinkedList) body;
+                ExitGame((UUID)body7.get(0), (UUID)body7.get(1), socket);
+                break;
+            case 8:
+                write(socket, 8, GetNewGame((UUID)body));
                 break;
         }
     }
 
-    private void sendAll(int headVal, Object body, UUID channel) {
-        LinkedList lst = (LinkedList) canal.channelSockets.get(channel);
-        for (Object socket : lst) {
-            write((SocketChannel) socket, headVal, body);
+    // #region Game Part
+    private Map<UUID, UUID> NewPlayer(SocketChannel socket, String username) {
+        UUID idPlayer = UUID.randomUUID();
+        UUID idGame;
+        String nameFormatted = Tools.formatStringLengthMax(username);
+
+        String newPlayerAddedResult = playerRepository.newPlayer(idPlayer, socket, nameFormatted);
+        if (newPlayerAddedResult.equals("")) {
+            idGame = gameEngineRepository.addPlayerToGame(idPlayer, playerRepository.getPlayerInfo(idPlayer));
+            if (idGame != null) {
+                Map<UUID, UUID> result = new HashMap<UUID, UUID>();
+                result.put(idPlayer, idGame);
+                return result;
+            }
         }
+        return null;
     }
+
+    private void SetPlayerReady(UUID idPlayer, UUID idGame, boolean ready) {
+        gameEngineRepository.setPlayerReady(idPlayer, idGame, ready);
+    }
+
+    private void TreatEvent(UUID idPlayer, UUID idGame, GameEvent evt) {
+        gameEngineRepository.treatEvent(evt, idPlayer, idGame);
+    }
+
+    private PlayArea GetPlayArea(UUID idGame) {
+        return gameEngineRepository.GetPlayArea(idGame);
+    }
+
+    private Map<String, Integer> GetScoreboard(UUID idGame) {
+        return gameEngineRepository.getScoreboard(idGame);
+    }
+    
+    private boolean IsGameOver(UUID idGame) {
+		return gameEngineRepository.isGameOver(idGame);
+	}
+    
+    private void ExitGame(UUID idPlayer, UUID idGame, SocketChannel socket) {
+		gameEngineRepository.ExitGame(idPlayer, idGame);
+        playerRepository.disconnectPlayer(idPlayer);
+        clients.remove(socket);
+    }
+    
+    private UUID GetNewGame(UUID idPlayer) {
+		UUID idGame = null;
+		PlayerInfo pInf = playerRepository.getPlayerInfo(idPlayer);
+		if(pInf!=null) {
+			idGame = gameEngineRepository.addPlayerToGame(idPlayer, pInf);
+		}
+		return idGame;
+	}
+    
+    // #endregion
 }

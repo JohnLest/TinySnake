@@ -1,4 +1,4 @@
-import java.rmi.RemoteException;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,18 +27,25 @@ public class PlayerRepository {
 	/**
 	 * Create new player and add it to the repository
 	 * 
-	 * @param id   uuid of the client
-	 * @param name the name of the player
+	 * @param id     uuid of the client
+	 * @param client the callback interface of the client
+	 * @param name   the name of the player
 	 * @return Empty string if ok, string that explains the error otherwise
 	 */
-	public PlayerInfo newPlayer(UUID id, String name) {
-		PlayerInfo pInfo = new PlayerInfo(name, id);
-		synchronized (PlayerRepository.this) {
-			getPlayers().put(id, pInfo);
-		}
-		;
-		return pInfo;
+	public String newPlayer(UUID id, SocketChannel client, String name) {
 
+		if (checkIfNameAlreadyUsed(name)) {
+			return "Name already used";
+		} else {
+			PlayerInfo pInfo = new PlayerInfo(name);
+			pInfo.setClientInfo(client);
+			synchronized (PlayerRepository.this) {
+				getPlayers().put(id, pInfo);
+			}
+			;
+
+			return "";
+		}
 	}
 
 	/**
@@ -53,6 +60,23 @@ public class PlayerRepository {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	/**
+	 * Check if an id match to a CallbackClientInterface
+	 * 
+	 * @param id     UUID of a player
+	 * @param client CallbackClientInterface of a client
+	 * @return true if it matches, false if not
+	 */
+	public boolean compareIdAndClient(UUID id, SocketChannel client) {
+
+		PlayerInfo pInfo = getPlayers().get(id);
+		if (pInfo != null) {
+			return pInfo.getClientInfo() == client;
+		}
+
 		return false;
 	}
 
@@ -72,4 +96,17 @@ public class PlayerRepository {
 		}
 		;
 	}
+
+	/**
+	 * Sleep the current thread
+	 * 
+	 * @param ms time to sleep the thread (milisecond)
+	 */
+	private void wait(int ms) {
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException e) {
+		}
+	}
+
 }

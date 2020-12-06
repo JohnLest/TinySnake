@@ -207,8 +207,6 @@ public class GUI {
                 Map waiter = new HashMap();
                 for (PlayerInfo player : playerLst) {
                     waiter.put(player.getName(), player.getReady());
-                    if(Objects.equals(player.getName(), nameField.getText()))
-                        App.id = player.getID();
                 }
                 wp.updatePlayersState(waiter, "");
                 break;

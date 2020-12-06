@@ -1,24 +1,19 @@
-import java.io.Serializable;
-import java.util.UUID;
+import java.nio.channels.SocketChannel;
 
 /**
  * Stores infos relative to player
  */
-public class PlayerInfo implements Serializable
+public class PlayerInfo
 {
-    private static final long serialVersionUID = 6529685098267757690L;
     private String name;
     private int score;
-    private Boolean ready;
-    private UUID id; 
+    private SocketChannel clientInfo;
 
 	/**
      * Creates empty player
      */
     public PlayerInfo()
     {
-        ready = false;
-        id = null;
         name = null;
         score = 0;
     }
@@ -28,12 +23,10 @@ public class PlayerInfo implements Serializable
      *
      * @param name The player name
      */
-    public PlayerInfo(String name, UUID id)
+    public PlayerInfo(String name)
     {
-        this.id = id;
         this.name = name;
         score = 0;
-        ready = false;
     }
 
     public int getScore()
@@ -46,16 +39,6 @@ public class PlayerInfo implements Serializable
         return name;
     }
 
-    public UUID getID()
-    {
-        return id;
-    }
-
-    public Boolean getReady()
-    {
-        return ready;
-    }
-
     public void setName(String name)
     {
         this.name = name;
@@ -65,6 +48,13 @@ public class PlayerInfo implements Serializable
     {
         score = s;
     }
+    public SocketChannel getClientInfo() {
+		return clientInfo;
+	}
+
+	public void setClientInfo(SocketChannel clientInfo) {
+		this.clientInfo = clientInfo;
+	}
 
     /**
      * Increases the player score
@@ -77,10 +67,5 @@ public class PlayerInfo implements Serializable
     {
         score += inc;
         return score;
-    }
-
-    public void setReady(boolean ready)
-    {
-        this.ready = ready;
     }
 }
