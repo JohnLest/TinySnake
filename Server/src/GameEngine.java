@@ -635,8 +635,10 @@ public class GameEngine {
 
 		String message = "";
 
-		if (!areAllPlayersReady())
+		if (!areAllPlayersReady()){
 			message = "All players are not ready";
+		}
+			
 
 		if (!isGameFull()) {
 			int missingPlayers = Settings.NB_PLAYERS - players.size();

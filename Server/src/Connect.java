@@ -3,13 +3,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +21,7 @@ public class Connect {
     public Connect() {
         playerRepository = new PlayerRepository();
         gameEngineRepository = new GameEngineRepository();
+        clients = new LinkedList<SocketChannel>();
         Connection();
     }
 

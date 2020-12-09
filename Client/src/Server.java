@@ -4,13 +4,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
+import java.security.PublicKey;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 public class Server {
-    private ByteBuffer head;
-    private ByteBuffer body;
-    private ByteBuffer[] buf;
     private InetSocketAddress addr;
 
     public Server(String url, int port) {
@@ -33,7 +32,7 @@ public class Server {
             scatter.read(new ByteBuffer[] {head, body});
             head.flip();
             body.flip();
-            result.put(Utils.deserialize(headSize), Utils.deserialize(bodySize));
+            result.put(Tools.deserialize(headSize), Tools.deserialize(bodySize));
         } catch (java.io.IOException e) { // Client probably closed connection
             System.out.println(e);
         } catch (ClassNotFoundException e) {
@@ -43,13 +42,13 @@ public class Server {
         return result;
     }
 
-    public void write(SocketChannel socket, int headVal, Object bodyMsg) {
+    public static void write(SocketChannel socket, int headVal, Object bodyMsg) {
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head; 
         ByteBuffer body; 
         try {
-            head = ByteBuffer.wrap(Utils.serialize(headVal));
-            body = ByteBuffer.wrap((Utils.serialize(bodyMsg)));
+            head = ByteBuffer.wrap(Tools.serialize(headVal));
+            body = ByteBuffer.wrap((Tools.serialize(bodyMsg)));
             gather.write(new ByteBuffer[] {head, body});
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -67,4 +66,7 @@ public class Server {
         }
     }
     */
+
+    //#region Game Part
+    //#endregion
 }

@@ -1,0 +1,19 @@
+Head serv -> client : 
+1 -> nouveau client (Connect.java) : Map<UUID, UUID>
+2 -> Update d'un nouveu client pour waiting panel (GameEngine) : LinkedList<Object>
+3 -> Le jeu commence (GameEngine) : Boolean
+4 -> Update dans le GUI (GameEngine) : int
+5 -> Get PlayArea (Connect) : playArea
+6 -> GetScoreboard (Connect) : Map<String, int>
+7 -> IsgameOver(Connect) : boolean
+8 -> NewGame : UUID
+
+Head client -> server :
+1 -> Nouveau client (avec Pseudo) : String
+2 -> le client est pres a jouer : LinkedList
+3 -> le client a un event : LinkedList
+4 -> le client demande un getPlayArea : UUID
+5 -> le client demande un getScoreBoard : UUID
+6 -> IsGameover? : UUID
+7 -> ExitGame : LinkedList
+8 -> GetNewGame : UUID

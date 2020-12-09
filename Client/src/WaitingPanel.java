@@ -2,10 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.nio.channels.SocketChannel;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.Map;
-import java.util.UUID;
+
 
 /**
  * Waiting GUI 
@@ -19,13 +18,10 @@ public class WaitingPanel extends JFrame{
     private JLabel messageInfo;
     
     private JTable playersStateTable;
+    private SocketChannel socket;
     private boolean firstUpdate = true;
 
-    private Server serv;
-    private SocketChannel socket;
-
-    public WaitingPanel(Server serv, SocketChannel socket) {
-        this.serv = serv;
+    public WaitingPanel(SocketChannel socket) {
         this.socket = socket;
         initFrame();
     }
@@ -78,26 +74,38 @@ public class WaitingPanel extends JFrame{
     }
     /**
      * When the user click on the play button
-     * Send a request to the server when the player is ready and manager the interface while waiting for the response
      */
     private void PlayBtnClick() {
-        playBtn.setEnabled(false);
+    	playerReady();
+    }
+    
+    /**
+     * Send a request to the server when the player is ready and manager the interface while waiting for the response
+     */
+    private void playerReady() {
     	Runnable r = (()->{
-            serv.write(socket, 2, true);
+            LinkedList body = new LinkedList();
+            body.add(App.idUser);
+            body.add(App.idGame);
+            body.add(true);
+    		Server.write(socket, 2, body);
     		playBtn.setEnabled(false);
     	});
     	Thread t = new Thread(r);
     	t.start();
     }
-
+    
     /**
      * Update the table of the players states
      * @param playersState a Map that contains the states of the players
      * @param message string with information to be displayed
      */
     public void updatePlayersState(Map<String, Boolean> playersState, String message) {
-        playersInfo.removeAll();
-
+    	if(firstUpdate) {
+    		firstUpdate = false;
+    	}else {
+        	playersInfo.removeAll();
+    	}
     	PlayersReadyTableModel prModel= new PlayersReadyTableModel(playersState);
     	playersStateTable = new JTable(prModel);
     	playersInfo.add(playersStateTable);
@@ -115,14 +123,4 @@ public class WaitingPanel extends JFrame{
     	setVisible(visible);
     	
     }
-	 /**
-     * Display a popup with a message
-     * @param errorMessage the message to display
-     */
-	private void showErrorMessage(String errorMessage) {
-		if (!errorMessage.equals("")) {
-			JOptionPane.showMessageDialog(null, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
-		}
-
-	}
 }
