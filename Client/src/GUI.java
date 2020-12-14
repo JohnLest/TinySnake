@@ -70,13 +70,14 @@ public class GUI {
 	 * at regular intervals
 	 */
 	public void update(int refreshInterval) {
+		System.out.println("update");
 		if (App.idGame != null && App.idUser != null) {
-			Server.write(socket, 4, App.idGame);
+			Server.write(socket, 4, App.idGame); // Get PlayArea
 			nbPartialRefresh = (nbPartialRefresh + 1) % refreshInterval;
 
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					Server.write(socket, 5, App.idGame);
+					Server.write(socket, 5, App.idGame); // Get ScoreBoard
 				}
 			});
 		}
@@ -194,13 +195,19 @@ public class GUI {
 		Runnable r = (() -> {
 			while (server != null) {
 				Dictionary result = server.read(socket);
-				analyseMsg(result);
+				System.out.println(result);
+				Runnable r2 = (() -> {
+					analyseMsg(result);
+				});
+				Thread t2 = new Thread(r2);
+				t2.start();
 			}
 		});
 		Thread t = new Thread(r);
 		t.start();
 		wp.showPanel(true);
 		showGamePane();
+		System.out.println("Manage Conection");
 		update(20);
 	}
 
@@ -214,6 +221,7 @@ public class GUI {
 			newGameButton.setEnabled(false);
 			wp.showPanel(true);
 			showGamePane();
+			System.out.println("Manage Restart");
 			update(20);
 			showRestartButton(false);
 		});
@@ -308,31 +316,39 @@ public class GUI {
 		for (Enumeration head = stream.keys(); head.hasMoreElements();)
 			headVal = (int) head.nextElement();
 		Object body = stream.get(headVal);
+		//System.out.println("Analyse : Head : " + headVal);
+		//System.out.println("Analyse : Body : " + body.toString());
 		switch (headVal) {
 			case 1:
+			System.out.println("case 1");
 				Map<UUID, UUID> body1 = (Map) body;
 				for (UUID first : body1.keySet()) {
 					App.idUser = first;
 					App.idGame = body1.get(first);
 					break;
 				}
+				Server.write(socket, 4, App.idGame); // Get PlayArea
 				break;
 			case 2:
+			System.out.println("case 2");
 				LinkedList<Object> body2 = (LinkedList) body;
 				Map<String, Boolean> waiter = (Map) body2.get(0);
 				String msg = (String) body2.get(1);
 				wp.updatePlayersState(waiter, msg);
 				break;
 			case 3:
+			System.out.println("case 3");
 				if ((Boolean) body) {
 					wp.showPanel(false);
 					gameStarted();
 				}
 				break;
 			case 4:
+			System.out.println("case 4");
 				update((int) body);
 				break;
 			case 5:
+			System.out.println("case 5");
 				PlayArea body5 = (PlayArea) body;
 				if (nbPartialRefresh == 0) {
 					board.copy(body5);
@@ -342,14 +358,17 @@ public class GUI {
 				frame.repaint();
 				break;
 			case 6:
+			System.out.println("case 6");
 				Map<String, Integer> body6 = (Map) body;
 				updateScoreBoard(body6);
 				frame.repaint();
 				break;
 			case 7:
+			System.out.println("case 7");
 				gameOver = (boolean) body;
 				break;
 			case 8:
+			System.out.println("case 8");
 				App.idGame = (UUID) body;
 				break;
 		}
@@ -394,8 +413,6 @@ class PlayBoard extends JPanel {
 	public void paintComponent(Graphics g) {
 		PlayArea playArea = gui.getBoard();
 		super.paintComponent(g);
-		if(App.idGame != null)
-			Server.write(socket, 6, App.idGame);
 		g.setColor(ColourMapper.map(Colour.BACKGROUND));
 		g.fillRect(0, 0, (caseSize - 1) * casesPerSide + 1, (caseSize - 1) * casesPerSide + 1);
 

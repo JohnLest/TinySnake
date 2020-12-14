@@ -4,9 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.ScatteringByteChannel;
 import java.nio.channels.SocketChannel;
-import java.security.PublicKey;
 import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 public class Server {
@@ -24,7 +22,7 @@ public class Server {
         ScatteringByteChannel scatter = socket.socket().getChannel();
         Dictionary result = new Hashtable<>();
         byte[] headSize = new byte[81];
-        byte[] bodySize = new byte[1024];
+        byte[] bodySize = new byte[10000];
         ByteBuffer head = ByteBuffer.wrap(headSize);
         ByteBuffer body = ByteBuffer.wrap(bodySize);
 
@@ -33,6 +31,8 @@ public class Server {
             head.flip();
             body.flip();
             result.put(Tools.deserialize(headSize), Tools.deserialize(bodySize));
+            
+            //System.out.println(result);
         } catch (java.io.IOException e) { // Client probably closed connection
             System.out.println(e);
         } catch (ClassNotFoundException e) {
@@ -43,6 +43,14 @@ public class Server {
     }
 
     public static void write(SocketChannel socket, int headVal, Object bodyMsg) {
+        try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        //System.out.println("Write : Head : " + headVal);
+        //System.out.println("Write : Body : " + bodyMsg.toString());
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head; 
         ByteBuffer body; 

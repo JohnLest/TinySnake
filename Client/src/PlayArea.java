@@ -5,6 +5,7 @@ import java.util.*;
  */
 public class PlayArea extends Rectangle
 {
+    private static final long serialVersionUID = 6529685098267757690L;
     private Colour[][] board;
     private LinkedList<Coord> coordChanges;
     private LinkedList<Colour> colourChanges;
