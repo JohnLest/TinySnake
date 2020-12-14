@@ -413,6 +413,8 @@ class PlayBoard extends JPanel {
 	public void paintComponent(Graphics g) {
 		PlayArea playArea = gui.getBoard();
 		super.paintComponent(g);
+		if(App.idGame != null)
+			Server.write(socket, 6, App.idGame);
 		g.setColor(ColourMapper.map(Colour.BACKGROUND));
 		g.fillRect(0, 0, (caseSize - 1) * casesPerSide + 1, (caseSize - 1) * casesPerSide + 1);
 
