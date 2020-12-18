@@ -1,14 +1,11 @@
 import java.util.UUID;
 
-// TODO Faire attention au exeptions
-
 public class App {
     public static UUID idUser;
     public static UUID idGame;
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, World!");
-        Server serv = new Server("10.15.0.1", 8888);
+        Server serv = new Server("localhost", 8888);
         new GUI(20, 25, serv);
     }
 }

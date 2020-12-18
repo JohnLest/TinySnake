@@ -38,7 +38,7 @@ public class Connect {
             // #endregion
 
         } catch (IOException e) {
-            System.out.println("Erreur connection : " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -48,7 +48,7 @@ public class Connect {
                 isConnected();
             }
         } catch (IOException e) {
-            System.out.println("Erreur connection : " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -78,8 +78,6 @@ public class Connect {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        //System.out.println("Write : Head : " + headVal);
-        //System.out.println("Write : Body : " + boddMsg.toString());
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head;
         ByteBuffer body;
@@ -105,7 +103,6 @@ public class Connect {
         } catch (IOException e) { // Client probably closed connection
             clients.remove(socket);
             close(socket);
-            System.err.println(e.getMessage());
         }
         Runnable r = (() -> {
             try {
@@ -138,49 +135,40 @@ public class Connect {
             try {
                 c.close();
             } catch (IOException e) {
-                System.out.println("Ereur Déconnection : " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
 
     private void analyseMsg(Object head, Object body, SocketChannel socket) {
         int headVal = (int) head;
-        //System.out.println(head);
         switch (headVal) {
             case 1:
-            System.out.println("case 1");
                 String userName = body.toString();
                 write(socket, 1, NewPlayer(socket, userName));
                 break;
             case 2:
-            System.out.println("case 2");
                 LinkedList body2 = (LinkedList) body;
                 SetPlayerReady((UUID) body2.get(0), (UUID) body2.get(1), (Boolean) body2.get(2));
                 break;
             case 3:
-            System.out.println("case 3");
                 LinkedList body3 = (LinkedList) body;
                 TreatEvent((UUID) body3.get(0), (UUID) body3.get(1), (GameEvent) body3.get(2));
                 break;
             case 4:
-                System.out.println("Case 4");
                 write(socket, 5, GetPlayArea((UUID) body));
                 break;
             case 5:
-                System.out.println("case 5");
                 write(socket, 6, GetScoreboard((UUID) body));
                 break;
             case 6:
-            System.out.println("case 6");
                 write(socket, 7, IsGameOver((UUID) body));
                 break;
             case 7:
-            System.out.println("case 7");
                 LinkedList body7 = (LinkedList) body;
                 ExitGame((UUID)body7.get(0), (UUID)body7.get(1), socket);
                 break;
             case 8:
-            System.out.println("case 8");
                 write(socket, 8, GetNewGame((UUID)body));
                 break;
         }

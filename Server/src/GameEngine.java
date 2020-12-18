@@ -176,7 +176,6 @@ public class GameEngine {
 	 * Update the gui of the client
 	 */
 	public void updateGUI() {
-		System.out.println("upadate GUI");
 		List<SocketChannel> dcClient = new ArrayList<SocketChannel>();
 		for (SocketChannel client : infoClientDc.keySet()) {
 

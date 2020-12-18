@@ -32,9 +32,8 @@ public class Server {
             body.flip();
             result.put(Tools.deserialize(headSize), Tools.deserialize(bodySize));
             
-            //System.out.println(result);
         } catch (java.io.IOException e) { // Client probably closed connection
-            System.out.println(e);
+            e.printStackTrace();
         } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -49,8 +48,6 @@ public class Server {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-        //System.out.println("Write : Head : " + headVal);
-        //System.out.println("Write : Body : " + bodyMsg.toString());
         GatheringByteChannel gather = socket.socket().getChannel();
         ByteBuffer head; 
         ByteBuffer body; 
@@ -63,17 +60,6 @@ public class Server {
             e.printStackTrace();
         }
     }
-
-    /*
-    public void finalize() {
-        try {
-            if (socket != null)
-                socket.close();
-        } catch (IOException e) {
-            System.out.println("Error Destruction : " + e.getMessage());
-        }
-    }
-    */
 
     //#region Game Part
     //#endregion
