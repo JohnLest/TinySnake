@@ -5,7 +5,7 @@ public class App {
     public static UUID idGame;
 
     public static void main(String[] args) throws Exception {
-        Server serv = new Server("localhost", 8888);
+        Server serv = new Server(args[0], 8888);
         new GUI(20, 25, serv);
     }
 }
